@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu Chatbot de IA</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .chat-container { width: 100%; max-width: 500px; background: #fff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; height: 80vh; }
+    .chat-box { flex: 1; overflow-y: auto; margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-right: 5px; }
+    .message { margin: 8px 0; padding: 10px 14px; border-radius: 12px; max-width: 80%; word-wrap: break-word; }
+    .user { background: #007bff; color: white; align-self: flex-end; margin-left: auto; }
+    .bot { background: #e9e9eb; color: #333; align-self: flex-start; }
+    .input-area { display: flex; gap: 10px; }
+    input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    button { padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    button:disabled { background: #a0a0a0; }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <h2>Assistente Virtual</h2>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Digite sua pergunta..." />
+      <button id="sendBtn" onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    // COLOQUE SUA CHAVE AQUI:
+    const API_KEY = "AQ.Ab8RN6KKwg33eCtCyo7387QhEw39RUeQd3Bgn0QMb7TXxuwHJw";
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+
+    async function sendMessage() {
+      const inputField = document.getElementById("userInput");
+      const chatBox = document.getElementById("chatBox");
+      const sendBtn = document.getElementById("sendBtn");
+      const userText = inputField.value.trim();
+
+      if (!userText) return;
+
+      // Adiciona mensagem do usuário
+      chatBox.innerHTML += `<div class="message user">${userText}</div>`;
+      inputField.value = "";
+      sendBtn.disabled = true;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Mensagem de carregamento
+      const loadingDiv = document.createElement("div");
+      loadingDiv.className = "message bot";
+      loadingDiv.innerText = "Pensando...";
+      chatBox.appendChild(loadingDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userText }] }]
+          })
+        });
+
+        const data = await response.json();
+        const botResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "Erro ao gerar resposta.";
+        
+        loadingDiv.innerText = botResponse;
+      } catch (error) {
+        loadingDiv.innerText = "Erro na comunicação com a IA.";
+        console.error(error);
+      } finally {
+        sendBtn.disabled = false;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    // Permite enviar com a tecla Enter
+    document.getElementById("userInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
